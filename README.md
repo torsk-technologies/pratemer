@@ -33,7 +33,9 @@ product are:
    _venue_ is willing to put its name on it?
 
 Everything in this MVP exists to test those two things. Anything that doesn't
-(native app, accounts, image upload, ML moderation, GPS) is deliberately left out.
+(accounts, image upload, ML moderation, GPS) is deliberately left out. The product
+is intentionally a plain web app — reached by scanning a QR code, with nothing to
+install — because removing that friction is core to the concept.
 
 ## Architecture
 
@@ -143,6 +145,41 @@ tier. Everything else (Worker requests, static assets) fits comfortably within f
 limits at pilot scale. Realistic running cost for a two-venue test: **~$5/month +
 the cost of printing stickers.**
 
+## Path to a live pilot
+
+Deploying is the easy part; a handful of things should be in place before a sticker
+goes on a real table. Roughly in order:
+
+**1. Stand up a live environment**
+- Cloudflare account on the Workers Paid plan, with `ADMIN_SECRET` set as a real secret.
+- A short, memorable custom domain (some phones surface the URL, and people may type it).
+- Confirm in production what only prod can prove: the Durable Object migration applied,
+  and WebSockets work over `wss://` on the real domain.
+
+**2. Add just enough observability**
+- Per-venue counters for unique joins, messages sent, and peak concurrent connections.
+  This is the data that answers the **density** hypothesis — wire it in before the
+  pilot, not after.
+
+**3. Close the pre-pilot gaps** (see _Known gaps_ below)
+- A real word filter, reports that reach a human, and the legal/privacy notice are the
+  minimum bar before exposing the app to the public.
+
+**4. Test on real phones**
+- iOS Safari and Android Chrome, over cellular — not just desktop. Explicitly test the
+  QR path opened from inside social-app in-app browsers (e.g. Instagram/Snapchat), which
+  can handle WebSockets differently.
+
+**5. Prepare the physical pilot**
+- Print QR stickers pointing at `https://<domain>/v/<venue-slug>`.
+- Have a seeding plan (a good daily prompt, a few planted opening messages) so the first
+  guests never see an empty room.
+- Decide success criteria up front: what join / message / return numbers justify
+  continuing versus stopping.
+
+A cheap way to de-risk before approaching venues: deploy, put the QR on your own table
+somewhere among friends, and confirm the whole flow survives real phones and real people.
+
 ## Known gaps / next steps
 
 - `BADWORDS` is a placeholder — replace with a real list before a public pilot.
@@ -156,6 +193,7 @@ the cost of printing stickers.**
 
 ## Out of scope (on purpose)
 
-Native app, push notifications, image upload, user accounts, GPS/continuous
-location, ML moderation. Kept out so the pilot stays cheap and tests the two real
-hypotheses above.
+Push notifications, image upload, user accounts, GPS/continuous location, ML
+moderation. Kept out so the pilot stays cheap and tests the two real hypotheses
+above. The app stays a scan-and-chat web page by design — there is nothing to
+install.
