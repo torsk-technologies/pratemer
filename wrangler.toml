@@ -1,0 +1,26 @@
+name = "pratemer"
+main = "worker/index.ts"
+compatibility_date = "2025-01-01"
+
+# One Worker serves BOTH the built React app (static assets) and the /api/* routes.
+# SPA routing: any unknown path falls back to index.html so /v/:venueId works.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# One Durable Object class = one live "room". We address one instance per venue
+# by name (idFromName(venueId)), so every venue gets its own isolated room.
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
+
+# ADMIN_SECRET gates the kill-switch / prompt endpoints. Do NOT commit a real one.
+# For local dev this default is fine; in prod set it with:
+#   npx wrangler secret put ADMIN_SECRET
+[vars]
+ADMIN_SECRET = "dev-secret-change-me"
